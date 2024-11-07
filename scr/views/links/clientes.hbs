@@ -1,0 +1,174 @@
+{{#if loggedin}}
+<h1>Clientes</h1>
+
+<div class="form-container">
+    <h2>Actualizar o Agregar Cliente</h2>
+    <form id="clienteForm" onsubmit="return handleSubmit(event)">
+        <input type="hidden" id="idCliente" value="{{selectedCliente?.idCliente}}">
+        <input type="text" id="nombres" placeholder="Nombres" required>
+        <input type="text" id="apellidos" placeholder="Apellidos" required>
+        <input type="text" id="nacionalidad" placeholder="Nacionalidad" required>
+        <input type="date" id="fechaNacimiento" placeholder="Fecha de Nacimiento" required>
+        <input type="number" id="telefono" placeholder="Teléfono" required>
+        <input type="email" id="correo" placeholder="Correo">
+        
+        <button type="button" id="addButton" onclick="addCliente()">Agregar</button>
+        <button type="button" id="updateButton" onclick="updateCliente()" {{#unless selectedCliente}}style="display:none;"{{/unless}}>Actualizar</button>
+        
+        <button type="button" onclick="clearFields()">Limpiar Campos</button>
+    </form>
+</div>
+
+<div class="search-container">
+    <input type="text" id="search" placeholder="Buscar por nombre el cliente" oninput="filterTable()" />
+</div>
+
+<table id="clientesTable">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nombres</th>
+            <th>Apellidos</th>
+            <th>Nacionalidad</th>
+            <th>Fecha de Nacimiento</th>
+            <th>Teléfono</th>
+            <th>Correo</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#each client}}
+        <tr onclick="selectCliente(this)">
+            <td>{{idCliente}}</td>
+            <td>{{nombres}}</td>
+            <td>{{apellidos}}</td>
+            <td>{{nacionalidad}}</td>
+            <td>{{fechaNacimiento}}</td>
+            <td>{{telefono}}</td>
+            <td>{{correo}}</td>
+            <td>
+                <button onclick="deleteCliente({{idCliente}})">Eliminar</button>
+            </td>
+        </tr>
+        {{/each}}
+    </tbody>
+</table>
+
+<script>
+    function selectCliente(row) {
+        const cells = row.getElementsByTagName("td");
+        document.getElementById("idCliente").value = cells[0].innerText;
+        document.getElementById("nombres").value = cells[1].innerText;
+        document.getElementById("apellidos").value = cells[2].innerText;
+        document.getElementById("nacionalidad").value = cells[3].innerText;
+
+        const fechaString = cells[4].innerText; 
+        const fecha = new Date(fechaString);
+        const day = String(fecha.getDate()).padStart(2, '0');
+        const month = String(fecha.getMonth() + 1).padStart(2, '0'); 
+        const year = fecha.getFullYear();
+        const formattedDate = `${year}-${month}-${day}`;
+
+        document.getElementById("fechaNacimiento").value = formattedDate;
+
+        document.getElementById("telefono").value = cells[5].innerText;
+        document.getElementById("correo").value = cells[6].innerText;
+
+        document.getElementById("updateButton").style.display = "inline-block";
+        document.getElementById("addButton").style.display = "none";
+    }
+
+    function addCliente() {
+        const nombres = document.getElementById("nombres").value;
+        const apellidos = document.getElementById("apellidos").value;
+        const nacionalidad = document.getElementById("nacionalidad").value;
+        const fechaNacimiento = document.getElementById("fechaNacimiento").value;
+        const telefono = document.getElementById("telefono").value;
+        const correo = document.getElementById("correo").value;
+
+        fetch('/clientes/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ nombres, apellidos, nacionalidad, fechaNacimiento, telefono, correo })
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            }
+        });
+    }
+
+    function updateCliente() {
+        const id = document.getElementById("idCliente").value;
+        const nombres = document.getElementById("nombres").value;
+        const apellidos = document.getElementById("apellidos").value;
+        const nacionalidad = document.getElementById("nacionalidad").value;
+        const fechaNacimiento = document.getElementById("fechaNacimiento").value;
+        const telefono = document.getElementById("telefono").value;
+        const correo = document.getElementById("correo").value;
+
+        fetch('/clientes/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ idCliente: id, nombres, apellidos, nacionalidad, fechaNacimiento, telefono, correo })
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            }
+        });
+    }
+
+    function clearFields() {
+        document.getElementById("idCliente").value = "";
+        document.getElementById("nombres").value = "";
+        document.getElementById("apellidos").value = "";
+        document.getElementById("nacionalidad").value = "";
+        document.getElementById("fechaNacimiento").value = "";
+        document.getElementById("telefono").value = "";
+        document.getElementById("correo").value = "";
+        document.getElementById("updateButton").style.display = "none";
+        document.getElementById("addButton").style.display = "inline-block"; 
+    }
+
+    function deleteCliente(id) {
+        fetch(`/clientes/delete/${id}`, { method: 'DELETE' })
+            .then(response => {
+                if (response.ok) {
+                    location.reload(); 
+                }
+            });
+    }
+
+    function filterTable() {
+        const filter = document.getElementById("search").value.toLowerCase();
+        const rows = document.getElementById("clientesTable").getElementsByTagName("tr");
+        for (let i = 1; i < rows.length; i++) {
+            const cells = rows[i].getElementsByTagName("td");
+            const clientName = cells[1].innerText.toLowerCase();
+            rows[i].style.display = clientName.includes(filter) ? "" : "none";
+        }
+    }
+
+    function setTodayDate() {
+        const today = new Date();
+        const day = String(today.getDate()).padStart(2, '0');
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const year = today.getFullYear();
+        const formattedDate = `${year}-${month}-${day}`;
+        document.getElementById("fechaNacimiento").value = formattedDate;
+    }
+
+    window.onload = setTodayDate;
+
+</script>
+
+<link rel="stylesheet" href="/css/style.css" />
+
+{{else}}
+    error, ingrese con su cuenta
+{{/if}}

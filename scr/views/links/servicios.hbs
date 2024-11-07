@@ -1,0 +1,164 @@
+{{#if loggedin}}
+<h1>Servicios</h1>
+
+<div class="form-container">
+    <h2>Actualizar o Agregar Servicio</h2>
+    <form id="serviceForm" onsubmit="return handleSubmit(event)">
+        <input type="hidden" id="idserviciospro" value="{{selectedService?.idserviciospro}}">
+        
+        <select id="idproveedor" required>
+            <option value="">Seleccionar Proveedor</option>
+            {{#each proveedores}}
+            <option value="{{idproveedor}}">{{idproveedor}} - {{razon_social}}</option>
+            {{/each}}
+        </select>
+
+        <input type="text" id="nombre_servicio" placeholder="Nombre de Servicio" required>
+        <input type="text" id="descripcion_servicio" placeholder="Descripción del Servicio" required>
+        <input type="text" id="categoria_servicio" placeholder="Categoría del Servicio" required>
+        <input type="number" step="0.01" id="costo" placeholder="Costo" required>
+        <input type="text" id="evaluacion" placeholder="Evaluación" required>
+        
+        <button type="button" id="addButton" onclick="addService()">Agregar</button>
+        <button type="button" id="updateButton" onclick="updateService()" {{#unless selectedService}}style="display:none;"{{/unless}}>Actualizar</button>
+        
+        <button type="button" onclick="clearServiceFields()">Limpiar Campos</button>
+    </form>
+</div>
+
+<div class="search-container">
+    <input type="text" id="searchService" placeholder="Buscar por nombre de servicio" oninput="filterServiceTable()" />
+</div>
+
+<table id="serviciosTable">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Proveedor</th>
+            <th>Nombre de Servicio</th>
+            <th>Descripción</th>
+            <th>Categoría</th>
+            <th>Costo</th>
+            <th>Evaluación</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#each variableservicios}}
+        <tr onclick="selectService(this)">
+            <td>{{idserviciospro}}</td>
+            <td>{{idproveedor}} - {{razon_social}}</td>
+            <td>{{nombre_servicio}}</td>
+            <td>{{descripcion_servicio}}</td>
+            <td>{{categoria_servicio}}</td>
+            <td>{{costo}}</td>
+            <td>{{evaluacion}}</td>
+            <td>
+                <button onclick="deleteService({{idserviciospro}})">X</button>
+            </td>
+        </tr>
+        {{/each}}
+    </tbody>
+</table>
+
+<script>
+    function selectService(row) {
+        const cells = row.getElementsByTagName("td");
+        document.getElementById("idserviciospro").value = cells[0].innerText;
+
+        const idproveedor = cells[1].innerText; 
+        const valorAntesDelGuion = idproveedor.split(' - ')[0]; 
+        document.getElementById("idproveedor").value = valorAntesDelGuion;
+
+        document.getElementById("nombre_servicio").value = cells[2].innerText;
+        document.getElementById("descripcion_servicio").value = cells[3].innerText;
+        document.getElementById("categoria_servicio").value = cells[4].innerText;
+        document.getElementById("costo").value = cells[5].innerText;
+        document.getElementById("evaluacion").value = cells[6].innerText;
+
+        document.getElementById("updateButton").style.display = "inline-block";
+        document.getElementById("addButton").style.display = "none";
+    }
+
+    function addService() {
+        const idproveedor = document.getElementById("idproveedor").value;
+        const nombre_servicio = document.getElementById("nombre_servicio").value;
+        const descripcion_servicio = document.getElementById("descripcion_servicio").value;
+        const categoria_servicio = document.getElementById("categoria_servicio").value;
+        const costo = document.getElementById("costo").value;
+        const evaluacion = document.getElementById("evaluacion").value;
+
+        fetch('/servicios/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ idproveedor, nombre_servicio, descripcion_servicio, categoria_servicio, costo, evaluacion })
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            }
+        });
+    }
+
+    function updateService() {
+        const idserviciospro = document.getElementById("idserviciospro").value;
+        const idproveedor = document.getElementById("idproveedor").value;
+        const nombre_servicio = document.getElementById("nombre_servicio").value;
+        const descripcion_servicio = document.getElementById("descripcion_servicio").value;
+        const categoria_servicio = document.getElementById("categoria_servicio").value;
+        const costo = document.getElementById("costo").value;
+        const evaluacion = document.getElementById("evaluacion").value;
+
+        fetch('/servicios/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ idserviciospro, idproveedor, nombre_servicio, descripcion_servicio, categoria_servicio, costo, evaluacion })
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            }
+        });
+    }
+
+    function clearServiceFields() {
+        document.getElementById("idserviciospro").value = "";
+        document.getElementById("idproveedor").value = "";
+        document.getElementById("nombre_servicio").value = "";
+        document.getElementById("descripcion_servicio").value = "";
+        document.getElementById("categoria_servicio").value = "";
+        document.getElementById("costo").value = "";
+        document.getElementById("evaluacion").value = "";
+        document.getElementById("updateButton").style.display = "none";
+        document.getElementById("addButton").style.display = "inline-block"; 
+    }
+
+    function deleteService(id) {
+        fetch(`/servicios/delete/${id}`, { method: 'DELETE' })
+        .then(response => {
+            if (response.ok) {
+                location.reload(); 
+            }
+        });
+    }
+    
+    function filterServiceTable() {
+        const filter = document.getElementById("searchService").value.toLowerCase();
+        const rows = document.getElementById("serviciosTable").getElementsByTagName("tr");
+        for (let i = 1; i < rows.length; i++) {
+            const cells = rows[i].getElementsByTagName("td");
+            const serviceName = cells[2].innerText.toLowerCase();
+            rows[i].style.display = serviceName.includes(filter) ? "" : "none";
+        }
+    }
+</script>
+
+<link rel="stylesheet" href="/css/style.css" />
+
+{{else}}
+    error, ingrese con su cuenta
+{{/if}}

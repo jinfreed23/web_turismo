@@ -1,0 +1,146 @@
+{{#if loggedin}}
+<h1>Proveedores</h1>
+
+<div class="form-container">
+    <h2>Actualizar o Agregar Proveedor</h2>
+    <form id="proveedorForm" onsubmit="return handleSubmit(event)">
+        <input type="hidden" id="idproveedor" value="{{selectedProveedor?.idproveedor}}">
+        <input type="text" id="ruc" placeholder="RUC" required>
+        <input type="text" id="razon_social" placeholder="Razón Social" required>
+        <input type="text" id="direccion" placeholder="Dirección" required>
+        <input type="email" id="correo" placeholder="Correo Electrónico" required>
+        <input type="text" id="telefono" placeholder="Teléfono" required>
+        
+        <button type="button" id="addButton" onclick="addProveedor()">Agregar</button>
+        <button type="button" id="updateButton" onclick="updateProveedor()" {{#unless selectedProveedor}}style="display:none;"{{/unless}}>Actualizar</button>
+        
+        <button type="button" onclick="clearFields()">Limpiar Campos</button>
+    </form>
+</div>
+
+<div class="search-container">
+    <input type="text" id="search" placeholder="Buscar por razón social" oninput="filterTable()" />
+</div>
+
+<table id="proveedoresTable">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>RUC</th>
+            <th>Razón Social</th>
+            <th>Dirección</th>
+            <th>Correo</th>
+            <th>Teléfono</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#each proveedores}}
+        <tr onclick="selectProveedor(this)">
+            <td>{{idproveedor}}</td>
+            <td>{{ruc}}</td>
+            <td>{{razon_social}}</td>
+            <td>{{direccion}}</td>
+            <td>{{correo}}</td>
+            <td>{{telefono}}</td>
+            <td>
+                <button onclick="deleteProveedor({{idproveedor}})">Eliminar</button>
+            </td>
+        </tr>
+        {{/each}}
+    </tbody>
+</table>
+
+<script>
+    function selectProveedor(row) {
+        const cells = row.getElementsByTagName("td");
+        document.getElementById("idproveedor").value = cells[0].innerText;
+        document.getElementById("ruc").value = cells[1].innerText;
+        document.getElementById("razon_social").value = cells[2].innerText;
+        document.getElementById("direccion").value = cells[3].innerText;
+        document.getElementById("correo").value = cells[4].innerText;
+        document.getElementById("telefono").value = cells[5].innerText;
+
+        document.getElementById("updateButton").style.display = "inline-block";
+        document.getElementById("addButton").style.display = "none";
+    }
+
+    function addProveedor() {
+        const ruc = document.getElementById("ruc").value;
+        const razon_social = document.getElementById("razon_social").value;
+        const direccion = document.getElementById("direccion").value;
+        const correo = document.getElementById("correo").value;
+        const telefono = document.getElementById("telefono").value;
+
+        fetch('/proveedores/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ ruc, razon_social, direccion, correo, telefono })
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            }
+        });
+    }
+
+    function updateProveedor() {
+        const id = document.getElementById("idproveedor").value;
+        const ruc = document.getElementById("ruc").value;
+        const razon_social = document.getElementById("razon_social").value;
+        const direccion = document.getElementById("direccion").value;
+        const correo = document.getElementById("correo").value;
+        const telefono = document.getElementById("telefono").value;
+
+        fetch('/proveedores/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ idproveedor: id, ruc, razon_social, direccion, correo, telefono })
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            }
+        });
+    }
+
+    function clearFields() {
+        document.getElementById("idproveedor").value = "";
+        document.getElementById("ruc").value = "";
+        document.getElementById("razon_social").value = "";
+        document.getElementById("direccion").value = "";
+        document.getElementById("correo").value = "";
+        document.getElementById("telefono").value = "";
+        document.getElementById("updateButton").style.display = "none";
+        document.getElementById("addButton").style.display = "inline-block"; 
+    }
+
+    function deleteProveedor(id) {
+        fetch(`/proveedores/delete/${id}`, { method: 'DELETE' })
+            .then(response => {
+                if (response.ok) {
+                    location.reload(); 
+                }
+            });
+    }
+
+    function filterTable() {
+        const filter = document.getElementById("search").value.toLowerCase();
+        const rows = document.getElementById("proveedoresTable").getElementsByTagName("tr");
+        for (let i = 1; i < rows.length; i++) {
+            const cells = rows[i].getElementsByTagName("td");
+            const razon_social = cells[2].innerText.toLowerCase();
+            rows[i].style.display = razon_social.includes(filter) ? "" : "none";
+        }
+    }
+</script>
+
+<link rel="stylesheet" href="/css/style.css" />
+
+{{else}}
+    error, ingrese con su cuenta
+{{/if}}

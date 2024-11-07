@@ -1,0 +1,288 @@
+{{#if loggedin}}
+<h1>Paquetes Turísticos</h1>
+<p>Administración de paquetes turísticos y sus servicios asociados</p>
+
+<div class="form-container">
+
+    <div class="package-form">
+        <input type="hidden" id="idPaqueteTuristico" value="{{selectedPackage?.idPaqueteTuristico }}">
+        
+        {{#each user}}
+            {{#if (eq nombre ../loggedUser)}}
+                <input type="hidden" id="idusuario" value="{{idusuario}}">
+            {{/if}}
+        {{/each}}
+
+        <input type="text" id="usuario" placeholder="Nombre de usuario" value="{{loggedUser}}" readonly>
+        
+        
+        <label for="destino">Destino:</label>
+        <input type="text" id="destino" placeholder="Destino del paquete" required>
+
+        <label for="stock">Cantidad de Personas:</label>
+        <input type="number" id="stock" placeholder="Cantidad del persona" required>
+
+        <label for="fechaInicio">Fecha Inicio:</label>
+        <input type="date" id="fechaInicio" required>
+
+        <label for="fechaFin">Fecha Fin:</label>
+        <input type="date" id="fechaFin" required>
+        <br>
+        <label for="precio">Precio:</label>
+        <input type="number" id="precio" placeholder="Precio del paquete" required>
+
+        <br>
+        <label for="actividades">Actividades:</label>
+        <br>
+        <textarea id="actividades" placeholder="Descripción de actividades" rows="10" cols="50"></textarea>
+        
+        <button type="button" id="addButton" onclick="addPackage()">Agregar</button>
+        <button type="button" id="updateButton" onclick="updatePackage()" {{#unless selectedPackage}}style="display:none;"{{/unless}}>Actualizar</button>
+        <button type="button" onclick="clearFields()">Limpiar Campos</button>
+    </div>
+
+    <div class="table-container">
+        <h2>Paquetes Turísticos</h2>
+        <table id="packagesTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Destino</th>
+                    <th>Stock</th>
+                    <th>Fecha Inicio</th>
+                    <th>Fecha Fin</th>
+                    <th>Precio</th>
+                    <th>Actividades</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each pturistico}}
+                <tr onclick="selectPackage(this)">
+                    <td>{{idPaqueteTuristico}}</td>
+                    <td>{{destino}}</td>
+                    <td>{{stock}}</td>
+                    <td>{{fechaInicio}}</td>
+                    <td>{{fechaFin}}</td>
+                    <td>{{precio}}</td>
+                    <td>{{actividades}}</td>
+                    <td>
+                        <button onclick="deletePackage({{idPaqueteTuristico}})">X</button>
+                    </td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+
+    <input type="text" id="searchService" placeholder="Buscar servicios" oninput="filterServices()">
+
+    <div class="table-container">
+        <h3>Seleccionar Servicios</h3>
+        
+        <select id="serviceSelect">
+            <option value="" disabled selected>Seleccione un servicio</option>
+            {{#each serv}}
+            <option value="{{idserviciospro }}" data-nombre="{{nombre_servicio}}" data-costo="{{costo}}" data-descripcion="{{descripcion_servicio}}">
+                {{nombre_servicio}} - {{costo}} - {{evaluacion}}
+            </option>
+            {{/each}}
+        </select>
+    </div>
+
+    <div class="table-container">
+        <h2>Servicios Añadidos</h2>
+        <table id="addedServicesTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre del Servicio</th>
+                    <th>Descripción</th>
+                    <th>Costo</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="addedServicesBody">
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+
+<script>
+    const addedServices = [];
+
+    function filterServices() {
+        const filter = document.getElementById("searchService").value.toLowerCase();
+        const options = document.getElementById("serviceSelect").getElementsByTagName("option");
+        for (let i = 0; i < options.length; i++) {
+            const serviceName = options[i].innerText.toLowerCase();
+            options[i].style.display = serviceName.includes(filter) ? "" : "none";
+        }
+    }
+
+    function agregarServicio() {
+        const select = document.getElementById('serviceSelect');
+        const selectedOption = select.options[select.selectedIndex];
+
+        if (!selectedOption.value) {
+            return; 
+        }
+
+        const id = selectedOption.value;
+        const nombre = selectedOption.getAttribute('data-nombre');
+        const descripcion = selectedOption.getAttribute('data-descripcion');
+        const costo = parseFloat(selectedOption.getAttribute('data-costo'));
+
+        const tableBody = document.getElementById('addedServicesBody');
+        const newRow = document.createElement('tr');
+        
+        newRow.innerHTML = `
+            <td>${id}</td>
+            <td>${nombre}</td>
+            <td>${descripcion}</td>
+            <td>${costo.toFixed(2)}</td>
+            <td><button class="removeButton">Eliminar</button></td>
+        `;
+        
+        tableBody.appendChild(newRow);
+
+        addedServices.push({ 
+            idserviciospro : id, 
+            nombre_servicio: nombre, 
+            descripcion_servicio: descripcion, 
+            costo: costo 
+        });
+
+        newRow.querySelector('.removeButton').addEventListener('click', function() {
+            const index = addedServices.findIndex(servicio => servicio.idserviciospro === id);
+            if (index > -1) {
+                addedServices.splice(index, 1);
+            }
+            tableBody.removeChild(newRow);
+            updateTotalPrice(); 
+        });
+
+        select.selectedIndex = 0; 
+        updateTotalPrice(); 
+    }
+
+    document.getElementById('serviceSelect').addEventListener('change', agregarServicio);
+
+    function updateTotalPrice() {
+        const totalService = addedServices.reduce((sum, servicio) => sum + servicio.costo, 0);
+        document.getElementById("precio").value = totalService.toFixed(2);
+    }
+
+ 
+
+    function addPackage() {
+        const idusuario = document.getElementById("idusuario").value;
+        const destino = document.getElementById("destino").value;
+        const stock = document.getElementById("stock").value;
+        const fechaInicio = document.getElementById("fechaInicio").value;
+        const fechaFin = document.getElementById("fechaFin").value;
+        const precio = document.getElementById("precio").value;
+        const actividades = document.getElementById("actividades").value;
+
+        fetch('/paqueteturistico/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idusuario, destino, stock, fechaInicio, fechaFin, precio, actividades, addedServices })
+        }).then(response => {
+            if (response.ok) location.reload();
+            else alert('Error al agregar el paquete turístico');
+        });
+    }
+
+    function updatePackage() {
+        const id = document.getElementById("idPaqueteTuristico").value;
+        const idusuario = document.getElementById("idusuario").value;  
+        const destino = document.getElementById("destino").value;
+        const stock = document.getElementById("stock").value;
+        const fechaInicio = document.getElementById("fechaInicio").value;
+        const fechaFin = document.getElementById("fechaFin").value;
+        const precio = document.getElementById("precio").value;
+        const actividades = document.getElementById("actividades").value;
+
+        fetch('/paqueteturistico/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idPaqueteTuristico: id, idusuario, destino, stock, fechaInicio, fechaFin, precio, actividades })
+        }).then(response => {
+            if (response.ok) location.reload();
+            else alert('Error al actualizar el paquete turístico');
+        });
+    }
+
+
+    function deletePackage(id) {
+        fetch(`/paqueteturistico/delete/${id}`, { method: 'DELETE' }).then(() => location.reload());
+    }
+
+    function selectPackage(row) {
+        const cells = row.getElementsByTagName("td");
+        document.getElementById("idPaqueteTuristico").value = cells[0].innerText;
+        document.getElementById("destino").value = cells[1].innerText;
+        document.getElementById("stock").value = cells[2].innerText;
+
+        const fechaInicioString = cells[3].innerText; 
+        const fechaInicio = new Date(fechaInicioString);
+
+        const dayInicio = String(fechaInicio.getDate()).padStart(2, '0');
+        const monthInicio = String(fechaInicio.getMonth() + 1).padStart(2, '0'); 
+        const yearInicio = fechaInicio.getFullYear();
+        const formattedDateInicio = `${yearInicio}-${monthInicio}-${dayInicio}`;
+
+        document.getElementById("fechaInicio").value = formattedDateInicio;
+
+        const fechaFinString = cells[4].innerText; 
+        const fechaFin = new Date(fechaFinString);
+
+        const dayFin = String(fechaFin.getDate()).padStart(2, '0');
+        const monthFin = String(fechaFin.getMonth() + 1).padStart(2, '0'); 
+        const yearFin = fechaFin.getFullYear();
+        const formattedDateFin = `${yearFin}-${monthFin}-${dayFin}`;
+
+        document.getElementById("fechaFin").value = formattedDateFin;
+
+        document.getElementById("precio").value = cells[5].innerText;
+        document.getElementById("actividades").value = cells[6].innerText;
+        document.getElementById("updateButton").style.display = "inline-block";
+        document.getElementById("addButton").style.display = "none";
+    }
+
+    function clearFields() {
+        document.getElementById("idPaqueteTuristico").value = "";
+        document.getElementById("destino").value = "";
+        document.getElementById("stock").value = "";
+        setTodayDate();
+        document.getElementById("precio").value = "";
+        document.getElementById("actividades").value = "";
+        document.getElementById("updateButton").style.display = "none";
+        document.getElementById("addButton").style.display = "inline-block";
+        addedServices.length = 0;
+        updateServiceTable();
+    }
+
+
+    function setTodayDate() {
+        const today = new Date();
+        const day = String(today.getDate()).padStart(2, '0');
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const year = today.getFullYear();
+        const formattedDate = `${year}-${month}-${day}`;
+        document.getElementById("fechaInicio").value = formattedDate;
+        document.getElementById("fechaFin").value = formattedDate;
+    }
+
+    window.onload = setTodayDate;
+
+</script>
+
+<link rel="stylesheet" href="/css/style.css" />
+
+{{else}}
+    <p>Error, ingrese con su cuenta</p>
+{{/if}}

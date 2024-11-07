@@ -1,0 +1,232 @@
+{{#if loggedin}}
+<h1>Reservar</h1>
+
+<div class="form-container">
+
+    <div class="package-form">
+        <input type="hidden" id="idreserva " value="{{selectedReserva?.idreserva}}">
+
+        <select id="idCliente" required>
+            <option value="">Seleccionar Clientes</option>
+            {{#each client}}
+            <option value="{{idCliente}}">{{idCliente}} - {{nombres}} - {{apellidos}}</option>
+            {{/each}}
+        </select>
+        <br>
+
+        <label for="fechaReserva">Fecha Reserva:</label>
+        <input type="date" id="fechaReserva" required>
+
+        <br>
+        <label for="cantidad">Ingrese la cantidad de personas interesadas en los paquetes turisticos:</label>
+        <input type="number" id="cantidad" placeholder="Cantidad de personas" required>
+
+        <br>
+        <label for="estado">Estado:</label>
+        <br>
+        <input type="text" id="estado" placeholder="Descripción del estado" required>
+        
+        <button type="button" id="addButton" onclick="addReserva()">Agregar</button>
+        <button type="button" id="updateButton" onclick="updateReserva()" {{#unless selectedReserva}}style="display:none;"{{/unless}}>Actualizar</button>
+        <button type="button" onclick="clearFields()">Limpiar Campos</button>
+    </div>
+
+    <div class="table-container">
+        <h2>Reservas</h2>
+        <table id="reservarTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Cliente</th>
+                    <th>Fecha Reserva</th>
+                    <th>Cantidad</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each reserv}}
+                <tr onclick="selectedReserva(this)">
+                    <td>{{idreserva}}</td>
+                    <td>{{idCliente}} - {{nombres}} - {{apellidos}}</td>
+                    <td>{{fechaReserva}}</td>
+                    <td>{{cantidad}}</td>
+                    <td>{{estado}}</td>
+                    <td>
+                        <button onclick="deleteReserva({{idreserva}})">Eliminar</button>
+                    </td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+
+    <input type="text" id="searchPackage" placeholder="Buscar Paquetes Turisticos" oninput="filterPackage()">
+
+    <div class="table-container">
+        <h2>Paquetes Turísticos</h2>
+        <table id="packagesTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Destino</th>
+                    <th>Stock</th>
+                    <th>Fecha Inicio</th>
+                    <th>Fecha Fin</th>
+                    <th>Precio</th>
+                    <th>Actividades</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each pturistico}}
+                <tr onclick="selectPackage(this)">
+                    <td>{{idPaqueteTuristico}}</td>
+                    <td>{{destino}}</td>
+                    <td>{{stock}}</td>
+                    <td>{{fechaInicio}}</td>
+                    <td>{{fechaFin}}</td>
+                    <td>{{precio}}</td>
+                    <td>{{actividades}}</td>
+                    <td>
+                        <button onclick="">+</button>
+                    </td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+
+    
+
+    <div class="table-container">
+        <h2>Servicios Añadidos</h2>
+        <table id="addedServicesTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre del Servicio</th>
+                    <th>Descripción</th>
+                    <th>Costo</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="addedServicesBody">
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+
+<script>
+
+    function filterPackage() {
+        const filter = document.getElementById("searchPackage").value.toLowerCase();
+        const rows = document.getElementById("packagesTable").getElementsByTagName("tr");
+        for (let i = 1; i < rows.length; i++) {
+            const cells = rows[i].getElementsByTagName("td");
+            const nombre = cells[1].innerText.toLowerCase();
+            rows[i].style.display = nombre.includes(filter) ? "" : "none";
+        }
+    } 
+ 
+
+    function addReserva() {
+        const id = document.getElementById("idreserva").value;
+        const idCliente = document.getElementById("idCliente").value;  
+        const fechaReserva = document.getElementById("fechaReserva").value;
+        const cantidad = document.getElementById("cantidad").value;
+        const estado = document.getElementById("estado").value;
+
+        fetch('/paqueteturistico/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idusuario, destino, stock, fechaInicio, fechaFin, precio, actividades, addedServices })
+        }).then(response => {
+            if (response.ok) location.reload();
+            else alert('Error al agregar el paquete turístico');
+        });
+    }
+
+    function updateReserva() {
+        const id = document.getElementById("idreserva").value;
+        const idCliente = document.getElementById("idCliente").value;  
+        const fechaReserva = document.getElementById("fechaReserva").value;
+        const cantidad = document.getElementById("cantidad").value;
+        const estado = document.getElementById("estado").value;
+
+        fetch('/paqueteturistico/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idreserva: id, idCliente , fechaReserva, cantidad, estado })
+        }).then(response => {
+            if (response.ok) location.reload();
+            else alert('Error al actualizar la reserva');
+        });
+    }
+
+
+    function deleteReserva(id) {
+        fetch(`/reserva/delete/${id}`, { method: 'DELETE' }).then(() => location.reload());
+    }
+
+    function selectedReserva(row) {
+        const cells = row.getElementsByTagName("td");
+        document.getElementById("idPaqueteTuristico").value = cells[0].innerText;
+        document.getElementById("destino").value = cells[1].innerText;
+        document.getElementById("stock").value = cells[2].innerText;
+
+        const fechaInicioString = cells[3].innerText; 
+        const fechaInicio = new Date(fechaInicioString);
+
+        const dayInicio = String(fechaInicio.getDate()).padStart(2, '0');
+        const monthInicio = String(fechaInicio.getMonth() + 1).padStart(2, '0'); 
+        const yearInicio = fechaInicio.getFullYear();
+        const formattedDateInicio = `${yearInicio}-${monthInicio}-${dayInicio}`;
+
+        document.getElementById("fechaInicio").value = formattedDateInicio;
+
+        const fechaFinString = cells[4].innerText; 
+        const fechaFin = new Date(fechaFinString);
+
+        const dayFin = String(fechaFin.getDate()).padStart(2, '0');
+        const monthFin = String(fechaFin.getMonth() + 1).padStart(2, '0'); 
+        const yearFin = fechaFin.getFullYear();
+        const formattedDateFin = `${yearFin}-${monthFin}-${dayFin}`;
+
+        document.getElementById("fechaFin").value = formattedDateFin;
+
+        document.getElementById("precio").value = cells[5].innerText;
+        document.getElementById("actividades").value = cells[6].innerText;
+        document.getElementById("updateButton").style.display = "inline-block";
+        document.getElementById("addButton").style.display = "none";
+    }
+
+    function clearFields() {
+        document.getElementById("idreserva ").value = "";
+        document.getElementById("idCliente ").value = "";
+        setTodayDate();
+        document.getElementById("cantidad").value = "";
+        document.getElementById("estado").value = "";
+    }
+
+
+    function setTodayDate() {
+        const today = new Date();
+        const day = String(today.getDate()).padStart(2, '0');
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const year = today.getFullYear();
+        const formattedDate = `${year}-${month}-${day}`;
+        document.getElementById("fechaReserva").value = formattedDate;
+    }
+
+    window.onload = setTodayDate;
+
+</script>
+
+<link rel="stylesheet" href="/css/style.css" />
+
+{{else}}
+    <p>Error, ingrese con su cuenta</p>
+{{/if}}

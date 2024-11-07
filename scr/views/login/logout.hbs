@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <div class="flex items-center justify-center min-h-screen">
+        <div class="block mx-auto p-8 bg-white w-full max-w-md border border-gray-200 rounded-lg shadow-lg">
+            <h1 class="text-3xl mb-8 font-bold text-center">Iniciar Sesión</h1>
+
+            {{#if alert}}
+                <div class="mb-4">
+                    <div class="alert {{alertIcon}}">
+                        <strong>{{alertTitle}}</strong> {{alertMessage}}
+                    </div>
+                </div>
+            {{/if}}
+            <form action="/login" method="POST">
+                <div class="mb-4">
+                    <label for="username" class="block mb-2 font-semibold">Usuario</label>
+                    <input type="text" name="username" placeholder="Ingresa tu usuario" id="username" class="border border-gray-300 w-full text-lg placeholder-gray-500 p-2 bg-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-500 rounded" required>
+                </div>
+                <div class="mb-6">
+                    <label for="password" class="block mb-2 font-semibold">Contraseña</label>
+                    <input type="password" name="password" placeholder="Ingresa tu contraseña" id="password" class="border border-gray-300 w-full text-lg placeholder-gray-500 p-2 bg-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-500 rounded" required>
+                </div>
+                <button type="submit" class="w-full bg-green-500 text-lg text-white font-semibold p-2 rounded-md hover:bg-green-600 focus:bg-green-700">Ingresar</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

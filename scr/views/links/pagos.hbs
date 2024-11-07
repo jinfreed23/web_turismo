@@ -1,0 +1,146 @@
+{{#if loggedin}}
+<h1>Pagos</h1>
+
+<div class="form-container">
+    <h2>Actualizar o Agregar Pago</h2>
+    <form id="pagoForm" onsubmit="return handleSubmit(event)">
+        <input type="hidden" id="idpago" value="{{selectedPago?.idpago}}">
+        <input type="number" id="idReserva" placeholder="ID de Reserva" required>
+        <input type="number" id="monto" placeholder="Monto" required>
+        <input type="text" id="metodoPago" placeholder="Método de Pago" required>
+        <input type="text" id="estado" placeholder="Estado" required>
+        <input type="date" id="fecha" placeholder="Fecha" required>
+        
+        <button type="button" id="addButton" onclick="addPago()">Agregar</button>
+        <button type="button" id="updateButton" onclick="updatePago()" {{#unless selectedPago}}style="display:none;"{{/unless}}>Actualizar</button>
+        
+        <button type="button" onclick="clearFields()">Limpiar Campos</button>
+    </form>
+</div>
+
+<div class="search-container">
+    <input type="text" id="search" placeholder="Buscar por ID de Reserva" oninput="filterTable()" />
+</div>
+
+<table id="pagosTable">
+    <thead>
+        <tr>
+            <th>ID Pago</th>
+            <th>ID Reserva</th>
+            <th>Monto</th>
+            <th>Método de Pago</th>
+            <th>Estado</th>
+            <th>Fecha</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#each pagos}}
+        <tr onclick="selectPago(this)">
+            <td>{{idpago}}</td>
+            <td>{{idReserva}}</td>
+            <td>{{monto}}</td>
+            <td>{{metodoPago}}</td>
+            <td>{{estado}}</td>
+            <td>{{fecha}}</td>
+            <td>
+                <button onclick="deletePago({{idpago}})">Eliminar</button>
+            </td>
+        </tr>
+        {{/each}}
+    </tbody>
+</table>
+
+<script>
+    function selectPago(row) {
+        const cells = row.getElementsByTagName("td");
+        document.getElementById("idpago").value = cells[0].innerText;
+        document.getElementById("idReserva").value = cells[1].innerText;
+        document.getElementById("monto").value = cells[2].innerText;
+        document.getElementById("metodoPago").value = cells[3].innerText;
+        document.getElementById("estado").value = cells[4].innerText;
+        document.getElementById("fecha").value = cells[5].innerText;
+
+        document.getElementById("updateButton").style.display = "inline-block";
+        document.getElementById("addButton").style.display = "none";
+    }
+
+    function addPago() {
+        const idReserva = document.getElementById("idReserva").value;
+        const monto = document.getElementById("monto").value;
+        const metodoPago = document.getElementById("metodoPago").value;
+        const estado = document.getElementById("estado").value;
+        const fecha = document.getElementById("fecha").value;
+
+        fetch('/pagos/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ idReserva, monto, metodoPago, estado, fecha })
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            }
+        });
+    }
+
+    function updatePago() {
+        const id = document.getElementById("idpago").value;
+        const idReserva = document.getElementById("idReserva").value;
+        const monto = document.getElementById("monto").value;
+        const metodoPago = document.getElementById("metodoPago").value;
+        const estado = document.getElementById("estado").value;
+        const fecha = document.getElementById("fecha").value;
+
+        fetch('/pagos/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ idpago: id, idReserva, monto, metodoPago, estado, fecha })
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            }
+        });
+    }
+
+    function clearFields() {
+        document.getElementById("idpago").value = "";
+        document.getElementById("idReserva").value = "";
+        document.getElementById("monto").value = "";
+        document.getElementById("metodoPago").value = "";
+        document.getElementById("estado").value = "";
+        document.getElementById("fecha").value = "";
+        document.getElementById("updateButton").style.display = "none";
+        document.getElementById("addButton").style.display = "inline-block"; 
+    }
+
+    function deletePago(id) {
+        fetch(`/pagos/delete/${id}`, { method: 'DELETE' })
+            .then(response => {
+                if (response.ok) {
+                    location.reload(); 
+                }
+            });
+    }
+
+    function filterTable() {
+        const filter = document.getElementById("search").value.toLowerCase();
+        const rows = document.getElementById("pagosTable").getElementsByTagName("tr");
+        for (let i = 1; i < rows.length; i++) {
+            const cells = rows[i].getElementsByTagName("td");
+            const idReserva = cells[1].innerText.toLowerCase();
+            rows[i].style.display = idReserva.includes(filter) ? "" : "none";
+        }
+    }
+</script>
+
+<link rel="stylesheet" href="/css/style.css" />
+
+{{else}}
+    error, ingrese con su cuenta
+{{/if}}
